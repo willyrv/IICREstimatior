@@ -2,6 +2,11 @@
 
 import os
 import numpy as np
+import matplotlib
+from matplotlib.rcsetup import defaultParams
+if matplotlib.rcParamsDefault['backend'] == 'agg':
+    print('no display found. Using non-interactive Agg backend')
+    matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import json
 import re
@@ -253,6 +258,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Simulate T2 values with ms then plot the IICR')
     parser.add_argument('params_file', type=str,
                     help='the filename of the parameters')
+    parser.add_argument('output_file',nargs='?',help='[optional] output pdf file, no extension' ,default="check_string_for_empty")
     args = parser.parse_args()
     with open(args.params_file) as json_params:
         p = json.load(json_params)
@@ -298,7 +304,6 @@ if __name__ == "__main__":
     ax = fig.add_subplot(1,1,1)
     
     N0 = p["scale_params"]["N0"]
-#    g_time = p["scale_params"]["generation_time"]
     if "use_real_data" in p:
         for d in p["use_real_data"]:
             (t_real_data, IICR_real_data, theta) = get_PSMC_IICR(d["psmc_results_file"])
@@ -314,7 +319,6 @@ if __name__ == "__main__":
                 ls=line_style, linewidth=linewidth, drawstyle='steps-post', alpha=alpha, label=plot_label)
                 
     for i in range(len(empirical_histories)):
-        #(x, empirical_lambda) = empirical_histories[i]
         (x,g_time,empirical_lambda) =empirical_histories[i]
         # Avoiding to have x[0]=0 in a logscale
         if x[0] == 0:
@@ -358,8 +362,6 @@ if __name__ == "__main__":
     if p["plot_params"]["plot_theor_IICR"]:
         theoretical_IICR_list = []
         T_max = np.log10(p["plot_params"]["plot_limits"][1])
-      #  t_k = np.logspace(1, T_max, 1000)
-      #  t_k = np.true_divide(t_k, 2 * N0 * g_time)
         for i in range(len(p["theoretical_IICR_nisland"])):
             params = p["theoretical_IICR_nisland"][i]
             t_k = np.logspace(1, T_max, 1000)
@@ -404,9 +406,12 @@ if __name__ == "__main__":
     if "plot_title" in p["plot_params"]:
       ax.set_title(p["plot_params"]["plot_title"])
     if ("save_figure" in p["plot_params"]) and p["plot_params"]["save_figure"]:
-        fig_name = os.path.splitext(args.params_file)[0]
-        plt.savefig("{}.pdf".format(fig_name),
-                        format="pdf")      
+        if args.output_file == 'check_string_for_empty':
+            fig_name = os.path.splitext(args.params_file)[0]
+            plt.savefig("{}.pdf".format(fig_name),format="pdf")
+        else:
+            fig_name = os.path.splitext(args.output_file)[0]
+            plt.savefig("{}.pdf".format(fig_name),format="pdf")   
     if ("show_plot" in p["plot_params"]) and p["plot_params"]["show_plot"]:
         plt.show()
     # Plotting the densities
