@@ -291,19 +291,19 @@ if __name__ == "__main__":
         factor = comb(sample_size, 2)
         
         empirical_lambda = factor * np.true_divide(len(obs)-F_x, f_x)
-        empirical_histories.append((x, empirical_lambda))
+        empirical_histories.append((x,p["scenarios"][i]["generation_time"], empirical_lambda))
 
     # Do the plot    
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1)
     
     N0 = p["scale_params"]["N0"]
-    g_time = p["scale_params"]["generation_time"]
+#    g_time = p["scale_params"]["generation_time"]
     if "use_real_data" in p:
         for d in p["use_real_data"]:
             (t_real_data, IICR_real_data, theta) = get_PSMC_IICR(d["psmc_results_file"])
             thisN0 = theta / (4.0 * d["mu"] * d["binsize"])
-            t_real_data = np.array(t_real_data) * 2.0 * thisN0 * g_time
+            t_real_data = np.array(t_real_data) * 2.0 * thisN0 * d["generation_time"]
             IICR_real_data = np.array(IICR_real_data) * thisN0
             plot_label = d["label"]
             linecolor = d["color"]
@@ -314,8 +314,8 @@ if __name__ == "__main__":
                 ls=line_style, linewidth=linewidth, drawstyle='steps-post', alpha=alpha, label=plot_label)
                 
     for i in range(len(empirical_histories)):
-        (x, empirical_lambda) = empirical_histories[i]
-        
+        #(x, empirical_lambda) = empirical_histories[i]
+        (x,g_time,empirical_lambda) =empirical_histories[i]
         # Avoiding to have x[0]=0 in a logscale
         if x[0] == 0:
             x[0] = float(x[1])/100
@@ -332,7 +332,7 @@ if __name__ == "__main__":
     if "save_IICR_as_file" in p:
         if p["save_IICR_as_file"]:
             for i in range(len(empirical_histories)):
-                (x, empirical_lambda) = empirical_histories[i]
+                (x,g_time, empirical_lambda) = empirical_histories[i]
                 with open("./IICR_{}_text_file.txt".format(i), "w") as f:
                     x2write = [str(2 * N0 * g_time * value) for value in x]
                     IICR2write = [str(N0 * value) for value in empirical_lambda]
@@ -358,10 +358,12 @@ if __name__ == "__main__":
     if p["plot_params"]["plot_theor_IICR"]:
         theoretical_IICR_list = []
         T_max = np.log10(p["plot_params"]["plot_limits"][1])
-        t_k = np.logspace(1, T_max, 1000)
-        t_k = np.true_divide(t_k, 2 * N0 * g_time)
+      #  t_k = np.logspace(1, T_max, 1000)
+      #  t_k = np.true_divide(t_k, 2 * N0 * g_time)
         for i in range(len(p["theoretical_IICR_nisland"])):
             params = p["theoretical_IICR_nisland"][i]
+            t_k = np.logspace(1, T_max, 1000)
+            t_k = np.true_divide(t_k, 2 * N0 * params["generation_time"])
             theoretical_IICR_list.append(compute_IICR_n_islands(t_k, params))
             
         # Plotting the theoretical IICR
@@ -371,8 +373,10 @@ if __name__ == "__main__":
             linewidth = p["theoretical_IICR_nisland"][i]["linewidth"]
             alpha = p["theoretical_IICR_nisland"][i]["alpha"]        
             plot_label = p["theoretical_IICR_nisland"][i]["label"]
-            ax.plot(2 * N0 * g_time * t_k, N0 * theoretical_IICR_list[i],
+            ax.plot(2* N0 * p["theoretical_IICR_nisland"][i]["generation_time"] * t_k, N0 * theoretical_IICR_list[i],
                 color=linecolor, ls=line_style, alpha=alpha, label=plot_label)
+            #ax.plot(2 l_IICR_list[i]* N0 * p["theoretical_IICR_nisland"][i]["generation_time"] * t_k, N0 * theoretical_IICR_list[i],
+            #    color=linecolor, ls=line_style, alpha=alpha, label=plot_label)
 
     # Plotting constant piecewise functions (if any)
     if "piecewise_constant_functions" in p:
