@@ -23,17 +23,14 @@ def stationary_nisland_iicr(m, n):
     
     return iicr
 
-
-def generate_panmictic_ms(migration_rate, islands):
-	import os
+def generate_panmictic_ms_from_data(time, iicr):
 	import subprocess
 	import numpy as np
-	from math import exp
 	
-	iicr_function = stationary_nisland_iicr(migration_rate, islands)
-
-	time = [10**t for t in np.linspace(-2, 2, 100)]
-	iicr = [iicr_function(t) for t in time]
+	ms_seq_simulations = 100
+	ms_theta = 1
+	ms_recombination = 3
+	ms_sites = int(1e4)
 
 	ms_command = ['./scrm', '2', str(ms_seq_simulations), 
 		'-t', str(ms_theta), '-r', str(ms_recombination),
@@ -43,8 +40,17 @@ def generate_panmictic_ms(migration_rate, islands):
 		ms_command.extend(['-eN', str(0.5 * time[i]), str(iicr[i])])
 
 	# run scrm command
-	msout_filename = './psmc tests/results 01/' + '2019-01-21_19-12-06_PSMC_c01_t001_r01.pan.scrm'
+	msout_filename = 'panmictic_ms_output.scrm'
 	msout = open(msout_filename, 'w')
 	proc = subprocess.Popen(ms_command, stdout = msout)
 	proc.wait()
 	msout.close()
+
+def generate_panmictic_ms_from_parameters(migration_rate, islands, time_limits = [-2, 2], samples = 64):
+	import numpy as np
+	
+	iicr_function = stationary_nisland_iicr(migration_rate, islands)
+
+	time = [10**t for t in np.linspace(*time_limits, samples)]
+	iicr = [iicr_function(t) for t in time]
+	generate_panmictic_ms_from_data(time, iicr)
